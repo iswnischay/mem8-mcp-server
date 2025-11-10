@@ -1,0 +1,141 @@
+{
+  "name": "mem8 Discord Bot Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "discord-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Discord Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse Discord message\nconst message = $input.item.json.content || '';\nconst author = $input.item.json.author || {};\nconst channelId = $input.item.json.channel_id || '';\n\n// Extract command and arguments\nconst parts = message.trim().split(' ');\nconst command = parts[0].toLowerCase();\nconst args = parts.slice(1);\n\nreturn {\n  json: {\n    command: command,\n    args: args,\n    message: message,\n    username: author.username,\n    channelId: channelId,\n    fullMessage: message\n  }\n};"
+      },
+      "id": "parse-command",
+      "name": "Parse Command",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "output": "={{ $json.command }}"
+      },
+      "id": "command-router",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "command": "docker run --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN -e VITE_FIREBASE_PROJECT_ID mem8-mcp-server:latest python -c \"import asyncio; import sys; sys.path.insert(0, '/app'); from mem8_server import mem8_authenticate; result = asyncio.run(mem8_authenticate(email='{{ $json.args[0] }}', password='{{ $json.args[1] }}')); print(result)\""
+      },
+      "id": "auth-command",
+      "name": "Authenticate",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 100]
+    },
+    {
+      "parameters": {
+        "command": "docker run --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN -e VITE_FIREBASE_PROJECT_ID mem8-mcp-server:latest python -c \"import asyncio; import sys; sys.path.insert(0, '/app'); from mem8_server import mem8_list_secrets; result = asyncio.run(mem8_list_secrets()); print(result)\""
+      },
+      "id": "list-command",
+      "name": "List Secrets",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 200]
+    },
+    {
+      "parameters": {
+        "command": "docker run --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN -e VITE_FIREBASE_PROJECT_ID mem8-mcp-server:latest python -c \"import asyncio; import sys; sys.path.insert(0, '/app'); from mem8_server import mem8_get_secret; result = asyncio.run(mem8_get_secret(key='{{ $json.args[0] }}')); print(result)\""
+      },
+      "id": "get-command",
+      "name": "Get Secret",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "command": "docker run --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN -e VITE_FIREBASE_PROJECT_ID mem8-mcp-server:latest python -c \"import asyncio; import sys; sys.path.insert(0, '/app'); from mem8_server import mem8_add_secret; result = asyncio.run(mem8_add_secret(key='{{ $json.args[0] }}', value='{{ $json.args[1] }}')); print(result)\""
+      },
+      "id": "add-command",
+      "name": "Add Secret",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 400]
+    },
+    {
+      "parameters": {
+        "command": "docker run --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN -e VITE_FIREBASE_PROJECT_ID mem8-mcp-server:latest python -c \"import asyncio; import sys; sys.path.insert(0, '/app'); from mem8_server import mem8_logout; result = asyncio.run(mem8_logout()); print(result)\""
+      },
+      "id": "logout-command",
+      "name": "Logout",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [850, 500]
+    },
+    {
+      "parameters": {
+        "authentication": "headerAuth",
+        "url": "https://discord.com/api/v10/channels/={{ $json.channelId }}/messages",
+        "options": {},
+        "bodyParametersJson": "={\n  \"content\": \"{{ $json.stdout }}\"\n}"
+      },
+      "id": "send-response",
+      "name": "Send Discord Response",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "1",
+          "name": "Discord Bot Token"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Discord Webhook": {
+      "main": [[{ "node": "Parse Command", "type": "main", "index": 0 }]]
+    },
+    "Parse Command": {
+      "main": [[{ "node": "Command Router", "type": "main", "index": 0 }]]
+    },
+    "Command Router": {
+      "main": [
+        [{ "node": "Authenticate", "type": "main", "index": 0 }],
+        [{ "node": "List Secrets", "type": "main", "index": 0 }],
+        [{ "node": "Get Secret", "type": "main", "index": 0 }],
+        [{ "node": "Add Secret", "type": "main", "index": 0 }],
+        [{ "node": "Logout", "type": "main", "index": 0 }]
+      ]
+    },
+    "Authenticate": {
+      "main": [[{ "node": "Send Discord Response", "type": "main", "index": 0 }]]
+    },
+    "List Secrets": {
+      "main": [[{ "node": "Send Discord Response", "type": "main", "index": 0 }]]
+    },
+    "Get Secret": {
+      "main": [[{ "node": "Send Discord Response", "type": "main", "index": 0 }]]
+    },
+    "Add Secret": {
+      "main": [[{ "node": "Send Discord Response", "type": "main", "index": 0 }]]
+    },
+    "Logout": {
+      "main": [[{ "node": "Send Discord Response", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {}
+}
