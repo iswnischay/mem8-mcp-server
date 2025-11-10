@@ -288,6 +288,16 @@ These will automatically be available in your codespace!
 
 ## 🐛 Troubleshooting
 
+### Devcontainer creation fails with Docker-in-Docker error
+
+**Error:** `The 'moby' option is not supported on Debian 'trixie'`
+
+**Solution:** Make sure you're using the latest version of the devcontainer configuration, which specifies `python:3.11-bookworm` instead of the default `python:3.11`. This fix is already in the repository.
+
+If you still see this error:
+1. Delete the codespace
+2. Create a new one (it will use the updated config)
+
 ### Docker not working in Codespaces
 
 If Docker commands fail:
