@@ -114,24 +114,28 @@ If someone shared their Firebase project with you, they'll provide:
 
 ## Step 4: Set Up Firebase Secrets in Docker
 
+Replace the placeholder values with your actual Firebase credentials:
+
 ```powershell
 # Set Firebase API Key (replace with YOUR values)
-docker mcp secret set VITE_FIREBASE_API_KEY="your_api_key_here"
+docker mcp secret set VITE_FIREBASE_API_KEY=your_api_key_here
 
 # Set Firebase Auth Domain (replace with YOUR values)
-docker mcp secret set VITE_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
+docker mcp secret set VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
 
 # Set Firebase Project ID (replace with YOUR values)
-docker mcp secret set VITE_FIREBASE_PROJECT_ID="your-project-id"
+docker mcp secret set VITE_FIREBASE_PROJECT_ID=your-project-id
 ```
+
+**Note**: Use `KEY=VALUE` format (no quotes, no spaces around `=`)
 
 Verify secrets were created:
 
 ```powershell
-docker mcp secret list
+docker mcp secret ls
 ```
 
-You should see:
+You should see three secrets listed:
 
 - VITE_FIREBASE_API_KEY
 - VITE_FIREBASE_AUTH_DOMAIN
@@ -139,149 +143,191 @@ You should see:
 
 ---
 
-## Step 5: Create Custom Catalog
+## Step 5: Automated Setup (Recommended)
 
-Create the catalogs directory if it doesn't exist:
-
-```powershell
-# For Windows
-mkdir $env:USERPROFILE\.docker\mcp\catalogs -Force
-```
-
-Create or edit the custom catalog file:
+Copy and paste this entire PowerShell script to set up everything automatically:
 
 ```powershell
-notepad $env:USERPROFILE\.docker\mcp\catalogs\custom.yaml
+# Pull the latest Docker image
+Write-Host "`n=== Pulling Docker Image ===" -ForegroundColor Cyan
+docker pull iswnischay/mem8-mcp-server:latest
+
+# Create catalogs directory
+Write-Host "`n=== Creating Directories ===" -ForegroundColor Cyan
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.docker\mcp\catalogs" | Out-Null
+Write-Host "✓ Created catalogs directory" -ForegroundColor Green
+
+# Create custom.yaml catalog
+Write-Host "`n=== Creating Catalog File ===" -ForegroundColor Cyan
+$catalogContent = @"
+version: 2
+name: custom
+displayName: Custom MCP Servers
+catalogs:
+  - name: mem8
+    image: iswnischay/mem8-mcp-server:latest
+    secrets:
+      - VITE_FIREBASE_API_KEY
+      - VITE_FIREBASE_AUTH_DOMAIN
+      - VITE_FIREBASE_PROJECT_ID
+    volumes:
+      - mem8-session-data:/tmp
+"@
+$catalogContent | Out-File -FilePath "$env:USERPROFILE\.docker\mcp\catalogs\custom.yaml" -Encoding UTF8 -Force
+Write-Host "✓ Created custom.yaml" -ForegroundColor Green
+
+# Create registry.yaml
+Write-Host "`n=== Creating Registry File ===" -ForegroundColor Cyan
+$registryContent = @"
+version: 2
+mcpServers:
+  mem8:
+    command: docker
+    args:
+      - run
+      - -i
+      - --rm
+      - -v
+      - mem8-session-data:/tmp
+      - iswnischay/mem8-mcp-server:latest
+"@
+$registryContent | Out-File -FilePath "$env:USERPROFILE\.docker\mcp\registry.yaml" -Encoding UTF8 -Force
+Write-Host "✓ Created registry.yaml" -ForegroundColor Green
+
+# Create Claude Desktop config
+Write-Host "`n=== Creating Claude Desktop Config ===" -ForegroundColor Cyan
+New-Item -ItemType Directory -Force -Path "$env:APPDATA\Claude" | Out-Null
+$claudeConfig = @{
+    mcpServers = @{
+        mem8 = @{
+            command = "docker"
+            args = @(
+                "run",
+                "-i",
+                "--rm",
+                "-v",
+                "mem8-session-data:/tmp",
+                "iswnischay/mem8-mcp-server:latest"
+            )
+        }
+    }
+}
+$claudeConfig | ConvertTo-Json -Depth 10 | Out-File -FilePath "$env:APPDATA\Claude\claude_desktop_config.json" -Encoding UTF8 -Force
+Write-Host "✓ Created claude_desktop_config.json" -ForegroundColor Green
+
+# Verify files
+Write-Host "`n=== Verification ===" -ForegroundColor Cyan
+Write-Host "Catalog file:" -ForegroundColor Yellow
+Get-Content "$env:USERPROFILE\.docker\mcp\catalogs\custom.yaml"
+Write-Host "`nRegistry file:" -ForegroundColor Yellow
+Get-Content "$env:USERPROFILE\.docker\mcp\registry.yaml"
+Write-Host "`nClaude config:" -ForegroundColor Yellow
+Get-Content "$env:APPDATA\Claude\claude_desktop_config.json"
+
+Write-Host "`n=== Setup Complete! ===" -ForegroundColor Green
+Write-Host "Next steps:" -ForegroundColor Yellow
+Write-Host "1. Restart Claude Desktop completely" -ForegroundColor White
+Write-Host "2. Ask Claude: 'What MCP tools do you have available?'" -ForegroundColor White
+Write-Host "3. You should see 6 mem8 tools listed" -ForegroundColor White
 ```
 
-Add this content (replace existing if file exists):
+**This script will**:
+
+- Pull the Docker image from Docker Hub
+- Create all necessary directories
+- Generate custom.yaml with correct configuration
+- Generate registry.yaml with correct configuration
+- Generate claude_desktop_config.json with correct configuration
+- Show you all the files for verification
+
+---
+
+## Step 6: Manual Setup (Alternative)
+
+If you prefer to create files manually, use these commands:
+
+### Create Catalog File
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.docker\mcp\catalogs"
+notepad "$env:USERPROFILE\.docker\mcp\catalogs\custom.yaml"
+```
+
+Paste this content:
 
 ```yaml
 version: 2
 name: custom
 displayName: Custom MCP Servers
-registry:
-  mem8:
-    description: "Secure secrets management through the mem8 application"
-    title: "mem8 Secrets Manager"
-    type: server
-    dateAdded: "2025-11-10T00:00:00Z"
-    image: mem8-mcp-server:latest
-    ref: ""
-    readme: ""
-    toolsUrl: ""
-    source: ""
-    upstream: ""
-    icon: ""
-    tools:
-      - name: mem8_authenticate
-      - name: mem8_list_secrets
-      - name: mem8_get_secret
-      - name: mem8_add_secret
-      - name: mem8_delete_secret
-      - name: mem8_logout
+catalogs:
+  - name: mem8
+    image: iswnischay/mem8-mcp-server:latest
     secrets:
-      - name: VITE_FIREBASE_API_KEY
-        env: VITE_FIREBASE_API_KEY
-        example: AIzaSyC...
-      - name: VITE_FIREBASE_AUTH_DOMAIN
-        env: VITE_FIREBASE_AUTH_DOMAIN
-        example: your-project.firebaseapp.com
-      - name: VITE_FIREBASE_PROJECT_ID
-        env: VITE_FIREBASE_PROJECT_ID
-        example: your-project-id
-    metadata:
-      category: productivity
-      tags:
-        - secrets
-        - security
-        - firebase
-        - password-manager
-      license: MIT
-      owner: local
+      - VITE_FIREBASE_API_KEY
+      - VITE_FIREBASE_AUTH_DOMAIN
+      - VITE_FIREBASE_PROJECT_ID
+    volumes:
+      - mem8-session-data:/tmp
 ```
 
-Save and close the file.
-
----
-
-## Step 5: Update Registry
-
-Edit the registry file:
+### Create Registry File
 
 ```powershell
-notepad $env:USERPROFILE\.docker\mcp\registry.yaml
+notepad "$env:USERPROFILE\.docker\mcp\registry.yaml"
 ```
 
-Add this entry under the existing `registry:` key (NOT at the root):
+Paste this content:
 
 ```yaml
-registry:
-  # ... existing servers ...
+version: 2
+mcpServers:
   mem8:
-    ref: ""
+    command: docker
+    args:
+      - run
+      - -i
+      - --rm
+      - -v
+      - mem8-session-data:/tmp
+      - iswnischay/mem8-mcp-server:latest
 ```
 
-**IMPORTANT**: Make sure it's indented under `registry:`, not at the root level.
-
-Save and close.
-
----
-
-## Step 6: Configure Claude Desktop
-
-Find your Claude Desktop config file:
-
-**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-
-Open it:
+### Create Claude Desktop Config
 
 ```powershell
-notepad $env:APPDATA\Claude\claude_desktop_config.json
+New-Item -ItemType Directory -Force -Path "$env:APPDATA\Claude"
+notepad "$env:APPDATA\Claude\claude_desktop_config.json"
 ```
 
-Update the configuration to include the custom catalog. Your config should look like this:
+Paste this content:
 
 ```json
 {
   "mcpServers": {
-    "mcp-toolkit-gateway": {
+    "mem8": {
       "command": "docker",
       "args": [
         "run",
         "-i",
         "--rm",
         "-v",
-        "/var/run/docker.sock:/var/run/docker.sock",
-        "-v",
-        "C:\\Users\\YOUR_USERNAME\\.docker\\mcp:/mcp",
-        "docker/mcp-gateway",
-        "--catalog=/mcp/catalogs/docker-mcp.yaml",
-        "--catalog=/mcp/catalogs/custom.yaml",
-        "--config=/mcp/config.yaml",
-        "--registry=/mcp/registry.yaml",
-        "--tools-config=/mcp/tools.yaml",
-        "--transport=stdio"
+        "mem8-session-data:/tmp",
+        "iswnischay/mem8-mcp-server:latest"
       ]
     }
   }
 }
 ```
 
-**CRITICAL**:
-
-1. Replace `YOUR_USERNAME` with your actual Windows username
-2. Use double backslashes (`\\`) in Windows paths
-3. Ensure the `--catalog=/mcp/catalogs/custom.yaml` line is present
-4. JSON does not support comments - remove any if you added them
-
-Save and close.
+Save all files.
 
 ---
 
 ## Step 7: Restart Claude Desktop
 
-1. **Completely quit** Claude Desktop (right-click system tray icon → Quit)
+1. **Completely quit** Claude Desktop:
+   - Right-click system tray icon → Quit
+   - Or close all Claude Desktop windows
 2. **Wait 5 seconds**
 3. **Start Claude Desktop** again
 
@@ -289,27 +335,20 @@ Save and close.
 
 ## Step 8: Verify Installation
 
-### Check if server is listed:
-
-```powershell
-docker mcp server list
-```
-
-You should see `mem8` in the list.
-
-### Test in Claude Desktop:
-
-Try asking Claude:
+In Claude Desktop, ask:
 
 ```
-Can you list the available mem8 tools?
+What MCP tools do you have available?
 ```
 
-Or:
+You should see 6 mem8 tools:
 
-```
-Authenticate to mem8 with email test@example.com and password testpass123
-```
+- `mem8_authenticate` - Login to mem8
+- `mem8_list_secrets` - List all your secrets
+- `mem8_get_secret` - Get a specific secret
+- `mem8_add_secret` - Add a new secret
+- `mem8_delete_secret` - Delete a secret
+- `mem8_logout` - Logout from mem8
 
 ---
 
