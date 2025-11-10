@@ -52,14 +52,33 @@ mcpServers:
 
 # Create Claude config
 Write-Host "Creating Claude Desktop config..." -ForegroundColor Yellow
-@{
-    mcpServers = @{
-        mem8 = @{
-            command = "docker"
-            args = @("run", "-i", "--rm", "-v", "mem8-session-data:/tmp", "iswnischay/mem8-mcp-server:latest")
-        }
+$json = @"
+{
+  "mcpServers": {
+    "mcp-toolkit-gateway": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-v",
+        "/var/run/docker.sock:/var/run/docker.sock",
+        "-v",
+        "C:\\Users\\$env:USERNAME\\.docker\\mcp:/mcp",
+        "docker/mcp-gateway",
+        "--catalog=/mcp/catalogs/docker-mcp.yaml",
+        "--catalog=/mcp/catalogs/custom.yaml",
+        "--config=/mcp/config.yaml",
+        "--registry=/mcp/registry.yaml",
+        "--tools-config=/mcp/tools.yaml",
+        "--transport=stdio"
+      ]
     }
-} | ConvertTo-Json -Depth 10 | Out-File -FilePath "$env:APPDATA\Claude\claude_desktop_config.json" -Encoding UTF8 -Force
+  }
+}
+"@
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$env:APPDATA\Claude\claude_desktop_config.json", $json, $utf8NoBom)
 
 Write-Host "`n✓ Setup complete!" -ForegroundColor Green
 Write-Host "`nNext steps:" -ForegroundColor Cyan
