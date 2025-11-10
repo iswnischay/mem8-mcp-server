@@ -48,19 +48,81 @@ docker images | findstr mem8
 
 ---
 
-## Step 3: Set Up Firebase Secrets
+## Step 3: Set Up Your Firebase Project
 
-You need to set these 3 secrets from your Firebase configuration:
+### Option A: Create Your Own Firebase Project (Recommended)
+
+1. **Go to Firebase Console**: https://console.firebase.google.com/
+2. **Create New Project**:
+
+   - Click "Add project"
+   - Enter project name (e.g., "my-secrets-manager")
+   - Disable Google Analytics (optional)
+   - Click "Create project"
+
+3. **Enable Authentication**:
+
+   - Go to "Authentication" → "Get started"
+   - Click "Email/Password" → Enable → Save
+   - Go to "Users" tab → "Add user"
+   - Create your account with email/password
+
+4. **Enable Firestore Database**:
+
+   - Go to "Firestore Database" → "Create database"
+   - Choose "Start in production mode"
+   - Select a location (closest to you)
+   - Click "Enable"
+
+5. **Set Security Rules**:
+
+   - In Firestore, go to "Rules" tab
+   - Replace with this:
+
+   ```javascript
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /secrets/{userId}/items/{secretId} {
+         allow read, write: if request.auth != null && request.auth.uid == userId;
+       }
+     }
+   }
+   ```
+
+   - Click "Publish"
+
+6. **Get Your Credentials**:
+   - Go to "Project Settings" (gear icon) → "General"
+   - Scroll to "Your apps" → Click web icon (</>)
+   - Register app (name: "mem8-mcp")
+   - Copy these values from "Firebase SDK snippet":
+     - `apiKey` → Your VITE_FIREBASE_API_KEY
+     - `authDomain` → Your VITE_FIREBASE_AUTH_DOMAIN
+     - `projectId` → Your VITE_FIREBASE_PROJECT_ID
+
+### Option B: Use Shared Firebase Project
+
+If someone shared their Firebase project with you, they'll provide:
+
+- Firebase API Key
+- Auth Domain
+- Project ID
+- Your email/password for authentication
+
+---
+
+## Step 4: Set Up Firebase Secrets in Docker
 
 ```powershell
-# Set Firebase API Key
-docker mcp secret set VITE_FIREBASE_API_KEY="AIzaSyC5ieG4PgXYXTn0BvUFVK_NixcCXElnXjE"
+# Set Firebase API Key (replace with YOUR values)
+docker mcp secret set VITE_FIREBASE_API_KEY="your_api_key_here"
 
-# Set Firebase Auth Domain
-docker mcp secret set VITE_FIREBASE_AUTH_DOMAIN="mem-08.firebaseapp.com"
+# Set Firebase Auth Domain (replace with YOUR values)
+docker mcp secret set VITE_FIREBASE_AUTH_DOMAIN="your-project-id.firebaseapp.com"
 
-# Set Firebase Project ID
-docker mcp secret set VITE_FIREBASE_PROJECT_ID="mem-08"
+# Set Firebase Project ID (replace with YOUR values)
+docker mcp secret set VITE_FIREBASE_PROJECT_ID="your-project-id"
 ```
 
 Verify secrets were created:
@@ -77,7 +139,7 @@ You should see:
 
 ---
 
-## Step 4: Create Custom Catalog
+## Step 5: Create Custom Catalog
 
 Create the catalogs directory if it doesn't exist:
 

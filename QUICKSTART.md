@@ -9,13 +9,16 @@ cd E:\mem8\mem8-mcp-server
 docker build -t mem8-mcp-server .
 ```
 
-### Set Firebase Secrets
+### Set Firebase Secrets (Use YOUR credentials!)
 
 ```powershell
-docker mcp secret set VITE_FIREBASE_API_KEY="AIzaSyC5ieG4PgXYXTn0BvUFVK_NixcCXElnXjE"
-docker mcp secret set VITE_FIREBASE_AUTH_DOMAIN="mem-08.firebaseapp.com"
-docker mcp secret set VITE_FIREBASE_PROJECT_ID="mem-08"
+# Replace these with YOUR Firebase project credentials
+docker mcp secret set VITE_FIREBASE_API_KEY="your_api_key_here"
+docker mcp secret set VITE_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+docker mcp secret set VITE_FIREBASE_PROJECT_ID="your-project-id"
 ```
+
+**Don't have Firebase?** See [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) Step 3 to create your own Firebase project (free!).
 
 ### Verify Installation
 

@@ -9,11 +9,13 @@ Docker-based MCP server for secrets management, compatible with Claude Desktop a
 ### For Claude Desktop Users
 
 1. **Pull Docker image:**
+
    ```bash
    docker pull iswnischay/mem8-mcp-server:latest
    ```
 
 2. **Set up Docker secrets:**
+
    ```bash
    docker mcp secret set mem8 VITE_FIREBASE_API_KEY your_api_key
    docker mcp secret set mem8 VITE_FIREBASE_AUTH_DOMAIN your_domain
@@ -29,11 +31,13 @@ Docker-based MCP server for secrets management, compatible with Claude Desktop a
 ### For n8n Users
 
 1. **Pull Docker image:**
+
    ```bash
    docker pull iswnischay/mem8-mcp-server:latest
    ```
 
 2. **Import workflow:**
+
    - Import `n8n-simple-workflow.json` in n8n
    - Configure Firebase credentials
    - Start automating!
@@ -42,20 +46,38 @@ Docker-based MCP server for secrets management, compatible with Claude Desktop a
 
 ---
 
-## 📁 What's Included
+## � Firebase Setup
+
+### Don't have Firebase credentials?
+
+Create your own Firebase project (free!) in 5 minutes:
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create new project → Enable Authentication (Email/Password) → Enable Firestore
+3. Get credentials from Project Settings
+4. Full guide: [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) - Step 3
+
+**Your Firebase API keys are safe to share!** Security comes from authentication and Firestore rules, not credential secrecy.
+
+---
+
+## �📁 What's Included
 
 ### Core Files
+
 - **`mem8_server.py`** - MCP server implementation
 - **`requirements.txt`** - Python dependencies
 - **`Dockerfile`** - Container configuration
 
 ### Documentation
+
 - **`INSTALLATION_GUIDE.md`** - Complete setup for Claude Desktop
 - **`QUICKSTART.md`** - Quick reference guide
 - **`CLAUDE.md`** - Technical details and protocol
 - **`N8N_GUIDE.md`** - n8n integration guide
 
 ### Testing & Examples
+
 - **`test-mcp.sh`** - Test script for validation
 - **`n8n-simple-workflow.json`** - Example n8n workflow
 

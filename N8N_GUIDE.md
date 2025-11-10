@@ -11,6 +11,7 @@ How to use the mem8 MCP server in n8n workflows.
 - n8n installed (cloud or self-hosted)
 - Docker installed on the n8n server
 - mem8 Docker image pulled: `docker pull iswnischay/mem8-mcp-server:latest`
+- **Your Firebase credentials** (see [INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md) to create Firebase project)
 
 ---
 
@@ -23,25 +24,27 @@ How to use the mem8 MCP server in n8n workflows.
 
 ### Step 2: Configure Command
 
+**Important:** Replace `YOUR_*` placeholders with your actual Firebase credentials!
+
 **For authentication:**
 
 ```bash
 echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"n8n","version":"1.0"}},"id":1}
-{"jsonrpc":"2.0","method":"tools/call","params":{"name":"mem8_authenticate","arguments":{"email":"user@example.com","password":"password123"}},"id":2}' | docker run -i --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY=AIzaSyC5ieG4PgXYXTn0BvUFVK_NixcCXElnXjE -e VITE_FIREBASE_AUTH_DOMAIN=mem-08.firebaseapp.com -e VITE_FIREBASE_PROJECT_ID=mem-08 iswnischay/mem8-mcp-server:latest
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"mem8_authenticate","arguments":{"email":"user@example.com","password":"password123"}},"id":2}' | docker run -i --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY=YOUR_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN=YOUR_PROJECT.firebaseapp.com -e VITE_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID iswnischay/mem8-mcp-server:latest
 ```
 
 **For listing secrets:**
 
 ```bash
 echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"n8n","version":"1.0"}},"id":1}
-{"jsonrpc":"2.0","method":"tools/call","params":{"name":"mem8_list_secrets","arguments":{}},"id":2}' | docker run -i --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY=AIzaSyC5ieG4PgXYXTn0BvUFVK_NixcCXElnXjE -e VITE_FIREBASE_AUTH_DOMAIN=mem-08.firebaseapp.com -e VITE_FIREBASE_PROJECT_ID=mem-08 iswnischay/mem8-mcp-server:latest
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"mem8_list_secrets","arguments":{}},"id":2}' | docker run -i --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY=YOUR_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN=YOUR_PROJECT.firebaseapp.com -e VITE_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID iswnischay/mem8-mcp-server:latest
 ```
 
 **For getting a secret:**
 
 ```bash
 echo '{"jsonrpc":"2.0","method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"n8n","version":"1.0"}},"id":1}
-{"jsonrpc":"2.0","method":"tools/call","params":{"name":"mem8_get_secret","arguments":{"key":"MY_KEY"}},"id":2}' | docker run -i --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY=AIzaSyC5ieG4PgXYXTn0BvUFVK_NixcCXElnXjE -e VITE_FIREBASE_AUTH_DOMAIN=mem-08.firebaseapp.com -e VITE_FIREBASE_PROJECT_ID=mem-08 iswnischay/mem8-mcp-server:latest
+{"jsonrpc":"2.0","method":"tools/call","params":{"name":"mem8_get_secret","arguments":{"key":"MY_KEY"}},"id":2}' | docker run -i --rm -v mem8-session-data:/tmp -e VITE_FIREBASE_API_KEY=YOUR_API_KEY -e VITE_FIREBASE_AUTH_DOMAIN=YOUR_PROJECT.firebaseapp.com -e VITE_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID iswnischay/mem8-mcp-server:latest
 ```
 
 ### Step 3: Parse Output
@@ -198,10 +201,10 @@ Import `n8n-simple-workflow.json` for a ready-to-use example.
 **Set environment variables in n8n:**
 
 ```bash
-# In n8n server
-export VITE_FIREBASE_API_KEY="AIzaSyC5ieG4PgXYXTn0BvUFVK_NixcCXElnXjE"
-export VITE_FIREBASE_AUTH_DOMAIN="mem-08.firebaseapp.com"
-export VITE_FIREBASE_PROJECT_ID="mem-08"
+# In n8n server - replace with YOUR credentials
+export VITE_FIREBASE_API_KEY="your_api_key_here"
+export VITE_FIREBASE_AUTH_DOMAIN="your-project.firebaseapp.com"
+export VITE_FIREBASE_PROJECT_ID="your-project-id"
 ```
 
 Then in Execute Command:
